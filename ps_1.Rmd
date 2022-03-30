@@ -1,0 +1,474 @@
+---
+title: "pr_1"
+author: "ori oberman"
+date: "22 3 2022"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+  markdown: 
+    wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r eval=FALSE, include=FALSE}
+# ## Clear desk
+ rm(list=ls())
+# 
+# ## Garbage collection
+ gc()
+```
+
+```{r  }
+## Set directory
+path <- "C:/Users/osoor/Documents/eco/ML_EC"
+setwd(path)
+getwd()
+
+options(scipen = 999)
+
+```
+
+```{r message=FALSE, include=FALSE}
+#library(haven) ## Reading .dta files
+#library(readstata13) ## Reading .dta files 2
+library(Hmisc) ## Describing data.frames
+library(dplyr) ## Data manipulation 
+#library(lmtest) ## Linear models tests 
+library(stargazer) ## Regression Tables
+#library(plm) ## Fixed effects models
+#library(lfe) ## Fixed effects models 2
+library(fixest) ## Fixed effects models 2
+#library(insight) ## Fixed effects models 3
+library(tidyverse)
+library(fixest)
+library(car) ## Hypo testing
+library(margins) 
+library(scales)
+library(data.table)
+library(forcats)
+#library(fastDummies) #יצרת משתנה דמי
+#library(sjlabelled) #יצרת משתנה דמי
+library(foreach)
+library(useful)
+library(tidyfast)
+library(doParallel)
+library(truncnorm)
+library(tidytable)
+library(collapse)
+library(fastverse)
+library(readstata13)
+library(ISLR)
+library(class)
+
+
+
+
+#office use
+library(officer)
+#library(mschart)
+library(officedown)
+
+
+
+# ggplot pack
+library(wesanderson)
+library(patchwork)
+#library(ggmap)
+library(RColorBrewer)
+#library(ggthemr)
+library(ggpubr)
+#library(treemapify)
+#library(ggiraphExtra)
+#library(sjPlot)
+#library(ggeffects)
+library(modelsummary)
+#library(kableExtra)
+#library(webshot)
+library(flextable)
+library(ggridges)
+library(paletteer)
+library(corrplot)
+
+#font pack
+library(ragg) #use heberow
+#library('systemfonts')
+library(utf8)
+#library('textshaping')
+library(extrafont)
+library(tinytex)
+#library(showtext)
+
+```
+
+# Linear Regression Analysis
+
+## 2
+
+```{r}
+df <- fread("CAhousing.csv")
+```
+
+## 3
+
+### a
+
+```{r}
+df %>% fdim()
+```
+
+### b
+
+```{r}
+df %>% qsu()
+
+df %>% descr
+
+
+
+# totalRooms
+
+#medianIncome גבוה 
+# households גבוה
+# אוכלסיה
+
+```
+
+### d
+
+```{r}
+
+
+df %>% cor() %>% corrplot(method = 'number',diag = FALSE, tl.col = "black")
+# df %>% cor() %>% corrplot( type = "upper", tl.col = "black")
+
+  # medianIncome - medianHouseValue
+
+
+```
+
+::: {dir="rtl"}
+אנו ראים מתאם גבוה בין מדדי החדרים השונים וכן בין מדד גודל האוכלוסיה למדדי החדרים ובנוסף מתאים גבוה בין מדדי ההכנסה לערך הבית ומתאם בין הקורדינטות
+:::
+
+## 4
+
+### a
+
+```{r}
+
+df %>%  ggscatter(x= "medianIncome",y="medianHouseValue",color = alpha(c("#458B74"),0.09),fill =alpha(c("#458B74"),0.04))
+
+```
+
+::: {dir="rtl"}
+אנו רואים שכאשר החציון של ערך הבתים גובה אין מתאם עם ההשתכרות החצונית של תושבי הבלוק.
+אולם בערכים נמוכים יותר נראה שישנה מגמה כלילת על מתאם חיובי
+
+### b
+:::
+
+```{r}
+reg_1 <- df %>%   lm(medianHouseValue ~ medianIncome,data = .)
+```
+
+### c
+
+```{r}
+reg_1 %>% summary 
+
+
+```
+
+::: {dir="rtl"}
+### d
+
+המודל הנאמד מנסח קשר לינארי בין ערכו החציוני של בית בבלוק ובין השכר החציוני של תושבי הבלוק.
+
+במודל זה החותך מייצג את ערכה של דירה באופן בסיסי, ללא קושר למעמד הכלכלי של תושבי הבלוק.
+
+האומד במודל מיצג את העליה של ערך הדירה כיחס של עליה בשכר החצוני בגודל של עשרת אלפים דולר .
+
+גם החותך וגם האמוד נמצאו במובהקים.
+
+כן כל המודל.
+
+אחוז השונות המוסברת על ידי מודל זה הינה 47 אחוז
+
+### e
+:::
+
+```{r}
+reg_1 %>% plot()
+```
+
+### f
+
+```{r}
+reg_1_pr<- reg_1 %>% predict()
+
+```
+
+### g
+
+```{r}
+
+df %>%  ggscatter(x= "medianIncome",y="medianHouseValue",add="reg.line",add.params=list(color = "red"),color = alpha(c("#458B74"),0.09),fill =alpha(c("#458B74"),0.01) )
+
+
+
+
+```
+
+::: {dir="rtl"}
+נראה שהמודל אינו מספק חיזוי טוב.
+השונות הגדולה בהכנסה החציונית במקרה של ערכי בדירות גובהים מטה את השיפוע של האומד.
+כתוצאה מכך גם באזורים בהם השונות נמוכה יותר המודל בעל טעויות גדולות ואינו מציגת את המגמה שמצויה ביחס שבין הכנסה לערך הבית.
+:::
+
+## 5
+
+### a
+
+אנו רואים שיש ערכים קוצוניים.
+בניהם ניתן להבחין שבעלויות גבוהות אין מתאם בין השכר ההחציוני לערך הדירה החציוני
+
+```{r}
+
+
+
+hist(df[,.(medianIncome)], breaks=100)
+hist(df[,.(medianHouseValue)], breaks=100)
+
+
+```
+
+ניתן לראות שישנה הבדל גדול בהתפלגות.
+בעוד שההכנסה החציונית מתפלגת באופן יחסת אחיד עם זנב בערכים הגובהים.
+לעומת זאת אנו רואים הצטברות גבוהה בערכים הגבוהים
+
+### b
+
+```{r}
+reg_2 <- lm(medianHouseValue~.,data =df)
+
+reg_2  %>% summary
+```
+
+### c
+
+נראה שהמודל המלא שהוצע בעייתי, נראה שהכללת הקורדינטות כמשתנה מסביר באופן הזה אינה הגיונית.
+ברור שלמיקום הוא בעל השפעה על ערך הדירה, אולם נראה שהשפעת המיקום אינה תוצאה של קרבה לקו המשווה או מרחק מהקטבים.
+כך שהכנסתם כגורם הסברי באופן לינארי נראת לכל הפחות תמוהה.
+יתר על כן, מכיוון שערכי האומדים של קו האורך וקו הגובה כמעט זהים והקולרציה שלהם קרובה לאיחד ושלילית שני עומדים למעשה יבטלו האחד את השני.
+על פניו נראה שיותר הגיוני להתיחס למיקום כמשתנה דמי של צמדי קורדינטות ולא כמשתנה כמותי
+
+עניין נוסף הוא היחס בין המדד של המשתנה המוסבר למשתנים המסברים.
+המדד המוסבר הוא מדד בעבור דירה.
+אולם חלק מן המדדים אינם כאלו ומציינים כמויות כלליות בעבור הבלוק.
+למשל אוכלוסיה, כמות חדרי השינה, וכמות החדרים הכללית.
+נראה שעדיף להחליף את המשתנים הללו במשתנים המייצגים מדד פר דירה.
+באופן זה נרווח דבר נוסף.נבטל את המתאם החזק הקיים בין המשתנה האוכליסה למשתני החדרים.
+
+
+כפי שניתן לראות להלן:.
+
+```{r}
+(df[,.(totalRooms,totalBedrooms,population)]/df$households) %>% cor()
+
+(df[,.(totalRooms,totalBedrooms,population)]/df$households) %>% cor() %>% corrplot(method = 'number',diag = FALSE, tl.col = "black")
+
+```
+
+
+
+```{r}
+
+reg_3 <- lm(medianHouseValue~ df$medianIncome+df$housingMedianAge+I(totalBedrooms/households)+I(population/households)+households+I(households^2),data =df)
+
+parameters::model_parameters(reg_3)
+
+
+```
+
+# KNN
+
+## 1
+
+## 2
+
+```{r}
+dat  <-   Default %>% qDT
+```
+
+## 3
+
+### a
+
+```{r}
+dat %>% fdim
+```
+
+### b
+
+```{r}
+dat %>% descr()
+```
+
+אנו רואים שאין ערכים שאינם קטגורים שנמצאים מסביב לאפס
+
+### c
+
+```{r}
+?Default
+```
+
+### d
+
+```{r}
+num_names <- dat %>% num_vars() %>% names()
+
+ dat[,lapply(.SD, sd),.SDcols = num_names]
+
+```
+
+## 4
+
+### a
+
+```{r}
+
+dat %<>% .[, -c("student")]
+ 
+
+
+```
+
+### b
+
+```{r}
+
+dat[,paste(num_names):= lapply(.SD,fscale),.SDcols= num_names]
+
+
+```
+
+### c
+
+```{r}
+library(rsample)
+
+dat_split <- rsample::initial_split(dat)
+
+train_dat <- training(dat_split)
+test_dat <- testing(dat_split)
+```
+
+### d
+
+```{r}
+k_n <- 5
+
+foreach(k_n=c(1,5,20,70)) %do% {
+# c
+  
+step_1<-   knn(train = train_dat[,2:3],test = test_dat[,2:3],k = k_n,cl =train_dat$default ) 
+
+assign(paste0("rknn_",k_n),step_1)  
+# d
+# ליצור טבלת שיכחות 
+assign(paste0("tknn_",k_n),table(get(paste0("rknn_",k_n))))  
+
+# e
+# ליצור טבלת הסתברות
+ 
+assign(paste0("pknn_",k_n),prop.table(get(paste0("tknn_",k_n))))  
+
+
+
+}
+
+rknn_1
+tknn_1
+pknn_1
+```
+
+## 5
+
+```{r}
+tab_train <- train_dat$default %>% table()  
+
+prop_train <- prop.table(tab_train)
+tab_train
+prop_train
+
+```
+
+
+```{r}
+p_knn_list <-   ls(pattern = "pknn")
+
+foreach(p=p_knn_list,.combine = `rbind`)%do% {
+  prop_train-get(p)
+}
+```
+
+ליצור מספר רב של K ולבדוק מה ההסתברות שתתקבל
+אנו ננסה למעזר את הטעות ולבחור את הK שיתן את הטעות המינימלית.
+
+
+```{r}
+tab_test <- test_dat$default %>% table()  
+
+prop_test <- prop.table(tab_test)
+
+ foreach(p=p_knn_list,.combine = `rbind`)%do% {
+  prop_test-get(p)
+} %>% `row.names<-`(.,p_knn_list)
+
+
+
+```
+
+### Kernel Regression
+
+```{r}
+
+df_1<- df %>% num_vars() %>% fscale()
+
+df_split <- rsample::initial_split(df_1,prop = 4/5)
+
+train_df <- training(df_split)
+test_df <- testing(df_split)
+
+cl <- makePSOCKcluster(4)
+doParallel::registerDoParallel(cl)
+
+kernel_type <-  c("box", "normal") 
+
+ks_df <-
+  foreach(kernel_type = kernel_type ,.combine = 'rbind') %:%
+  foreach(h_n = 1:20/10,.combine = 'rbind',.packages = c("fastverse" ) )%dopar% {
+
+  
+train_ks <-   ksmooth(train_df$medianHouseValue,train_df$medianIncome,kernel_type,bandwidth = h_n)
+
+mse_train<- fmean((train_ks$y-train_df$medianHouseValue)^2)
+  
+test_ks <-  ksmooth(test_df$medianHouseValue,test_df$medianIncome,kernel_type,bandwidth = h_n)
+
+mse_test <- fmean((test_ks$y-test_df$medianHouseValue)^2)
+
+c(kernel_type,h_n,mse_train,mse_test)
+
+data.table("Kernel"=kernel_type,"h"=h_n,"train_MSE"= mse_train,"test_MSE"=mse_test)
+
+
+}
+
+
+
+ks_df %>% flextable()
+```
