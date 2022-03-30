@@ -464,58 +464,25 @@ test_df <- testing(df_split) %>% .[order(medianIncome)]
 
 :::
 
-### b + 
+### b 
 ```{r}
+
 cl <- makePSOCKcluster(4)
 doParallel::registerDoParallel(cl)
 
+
 kernel_type <-  c("box", "normal") 
+
 type_df <- c("train_df" , "test_df")
 
+
 ks_df <-
-  foreach(kernel_type = kernel_type ,.combine = 'rbind') %:%
-  foreach(h_n = 1:20/10,.combine = 'rbind',.packages = c("fastverse" ) )%dopar% {
-
-  
-train_ks <-   ksmooth(train_df$medianHouseValue,train_df$medianIncome,kernel_type,bandwidth = h_n)
-
-train_ks <-   ksmooth(train_df$medianHouseValue,train_df$medianIncome,"normal",bandwidth = 0.2)
-
-mse_train<- fmean((train_ks$y-train_df$medianHouseValue)^2)
-  
-test_ks <-  ksmooth(test_df$medianHouseValue,test_df$medianIncome,kernel_type,bandwidth = h_n)
-
-mse_test <- fmean((test_ks$y-test_df$medianHouseValue)^2)
-
-c(kernel_type,h_n,mse_train,mse_test)
-
-data.table("Kernel"=kernel_type,"h"=h_n,"train_MSE"= mse_train,"test_MSE"=mse_test)
-
-
-}
-
-train_ks %>% qDT() %>% names
-AA<- train_ks %>% qDT() 
-  ggplot2::quickplot(x =train_ks$x,y=train_ks$y)
-
-  AA %>% ggline(x="x",y="y")
-  
-  
-ks_df %>% flextable()
-```
-
-
-
-```{r}
-ks_df2 <-
   foreach(kernel_type = kernel_type ,.combine = 'rbind') %:%
   foreach(h_n = 1:20/10,.combine = 'rbind' )%:%
   foreach(type_df = type_df,.combine = 'rbind',.packages = c("fastverse" ,"stringr") ,.export = type_df) %dopar% {
 
   
-df_step1 <-
-
-  ksmooth(x=get(type_df)$medianIncome,y=get(type_df)$medianHouseValue,kernel_type,bandwidth = h_n,x.points = unique(get(type_df)$medianIncome)) %>% qDT()
+df_step1 <- ksmooth(x=get(type_df)$medianIncome,y=get(type_df)$medianHouseValue,kernel_type,bandwidth = h_n,x.points = unique(get(type_df)$medianIncome)) %>% qDT()
 
 
 df_step1 <- merge.data.table(df_step1,get(type_df)[,.(medianHouseValue,medianIncome)],by.x = "x",by.y ="medianIncome" ,all.y = TRUE)
@@ -523,20 +490,10 @@ df_step1 <- merge.data.table(df_step1,get(type_df)[,.(medianHouseValue,medianInc
 df_step1[,"kernel" := kernel_type]
 df_step1[,"h" := h_n]
 df_step1[,"kind" := str_sub(type_df,end = -4)]
-# df_step1[,row:=1:.N]
-# df_step1[,"true_y" := get(type_df)$medianHouseValue]
- # df_step1 <- df_step1[get(type_df)[,.(medianHouseValue,row)],on=.(row)]
- 
- # df_step1 <- get(type_df)[,.(medianHouseValue,medianIncome)][df_step1,on=.(x=medianIncome)]
- 
-# df_step1[,medianHouseValue:= NULL]
-# df_step1 <- merge.data.table(df_step1,get(type_df)[,.(medianHouseValue,medianIncome)],by.x = "x",by.y ="medianIncome" ,all.y = TRUE)
-# df_step1 <- cbind(df_step1,get(type_df)[,.(medianHouseValue)])
- 
 
 df_step1[,true_y:=medianHouseValue]
-#
-  df_step1[,medianHouseValue:= NULL]
+
+df_step1[,medianHouseValue:= NULL]
 
 
 df_step1
@@ -544,12 +501,12 @@ df_step1
 }
 
 
-ks_df2
+ks_df
 
-qplot(data=ks_df2,x=x,y = true_y)
+qplot(data=ks_df,x=x,y = true_y)
 
 
-df_plot_ks<- ks_df2[kind == "train"][,gro := paste("kernel =",kernel,",","h = ",h ),by=.(kernel,h)]
+df_plot_ks<- ks_df[kind == "train"][,gro := paste("kernel =",kernel,",","h = ",h ),by=.(kernel,h)]
 
 set.seed(1244)
 
@@ -561,7 +518,7 @@ df_plot_ks[gro %in% gro_sam] %>% ggplot() + geom_point(
   aes(x = x, y = true_y),
   color = alpha(c("#838B8B"), 0.09),
   fill = alpha(c("#838B8B"), 0.04),
-  data = funique(ks_df2[,.(x,true_y)]),
+  data = funique(ks_df[,.(x,true_y)]),
   inherit.aes = TRUE
 ) +
   geom_line(aes(x = x, y = y, color = gro), inherit.aes = FALSE) +
@@ -572,84 +529,12 @@ df_plot_ks[gro %in% gro_sam] %>% ggplot() + geom_point(
 ```{r}
 
 
-ks_df2[,kind_MSE:=paste0(kind,"_mse")]
+ks_df[,kind_MSE:=paste0(kind,"_mse")]
 
-ks_df2[,.(mse = fmean((y -  true_y)^2)),by=.(kernel,h,kind_MSE)] %>% dcast(kernel+h~kind_MSE,value.var="mse") %>% flextable()
+ks_df[,.(mse = fmean((y -  true_y)^2)),by=.(kernel,h,kind_MSE)] %>% dcast(kernel+h~kind_MSE,value.var="mse") %>% flextable()
 
-ks_df2[,.(mse = fmean((y -  true_y)^2)),by=.(kernel,h,kind)]  %>%
+ks_df[,.(mse = fmean((y -  true_y)^2)),by=.(kernel,h,kind)]  %>%
   ggplot(aes(x=h,y=mse))+geom_line(aes(linetype = kind,color = kernel))+theme_linedraw()
-
-```
-
-
-```{r}
-
-ks_df3 <-
-  foreach(kernel_type = kernel_type ,.combine = 'rbind') %:%
-  foreach(h_n = 1:20/10,.combine = 'rbind' )%:%
-  foreach(type_df = type_df,.combine = 'rbind',.packages = c("fastverse" ,"stringr") ,.export = type_df) %dopar% {
-
-  
-df_step1 <-
-  ksmooth(x=get(type_df)$medianIncome,y=get(type_df)$medianHouseValue,kernel_type,bandwidth = h_n,x.points = get(type_df)$medianIncome) %>% qDT()
-
-
-df_step1 <- cbind(
-df_step1,
-get(type_df)[,.(medianHouseValue)]  
-)
-
-df_step1[,"kernel" := kernel_type]
-df_step1[,"h" := h_n]
-df_step1[,"kind" := str_sub(type_df,end = -4)]
-# df_step1[,"true_y" := get(type_df)$medianHouseValue]
-#df_step1 <- df_step1[get(type_df)[,.(medianHouseValue,medianIncome)],on=.(x=medianIncome)]
-# df_step1[,medianHouseValue:= NULL]
-# df_step1 <- merge.data.table(df_step1,get(type_df)[,.(medianHouseValue,medianIncome)],by.x = "x",by.y ="medianIncome" ,all.x = TRUE)
-df_step1[,true_y:=medianHouseValue]
-df_step1[,medianHouseValue:= NULL]
-
-df_step1
-
-}
-
-ks_df3[kind=="train"&h==0.7&kernel=="normal"] %>% nrow()
-train_df$medianIncome %>% length()
-
-AAA<- cbind(
-ks_df3[kind=="train"&h==0.7&kernel=="normal"],train_df[,.(medianIncome,medianHouseValue)]
-)
-
-
-AAA<- ks_df2[kind=="train",unique(.SD),by = row,.SDcols= c("x","true_y")]
-
-AAA[order(x)]
-
-qplot(data=AAA,x=x,y =medianHouseValue)  
-
-qplot( data= ks_df2[kind=="train"],x=x,y =true_y)  
-
-merge.data.table(
-ks_df3[kind=="train"&h==0.7&kernel=="normal"]
-,
-train_df[,.(medianIncome,medianHouseValue)],by.x = "x",by.y = "medianIncome")
-
-train_df[,.(medianIncome,medianHouseValue)] %>% nrow()
-all.equal(ks_df3[kind=="train"&h==0.2&kernel=="normal"]$x,train_df$medianIncome)
-data.table(ks_df3[kind=="train"&h==0.2&kernel=="normal"][,.(x,)],train_df$medianIncome) %>% view()
-
-df_plot_ks1<- ks_df3[kind == "train"][,gro := .GRP,by=.(kernel,h)]
-df_plot_ks1<- ks_df3[kind == "train"][,gro := paste("kernel =",kernel,",","h = ",h ),by=.(kernel,h)]
-
-
-set.seed(1244)
-sam <- sample(1:40,3)
-
-gro_sam<- df_plot_ks1$gro %>% unique() %>% .[sam]
-
-df_plot_ks1[gro %in% gro_sam] %>% ggplot()+ geom_point(aes(x = medianIncome,y=medianHouseValue),color = alpha(c("#778899"),0.09),data = train_df,inherit.aes = TRUE)+geom_line(aes(x=x,y=y,color=gro),inherit.aes =FALSE)+ theme_classic2()
-
-
 
 ```
 
