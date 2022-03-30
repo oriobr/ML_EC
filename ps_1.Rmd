@@ -572,11 +572,12 @@ df_plot_ks[gro %in% gro_sam] %>% ggplot() + geom_point(
 ```{r}
 
 
-ks_df2[]
+ks_df2[,kind_MSE:=paste0(kind,"_mse")]
 
+ks_df2[,.(mse = fmean((y -  true_y)^2)),by=.(kernel,h,kind_MSE)] %>% dcast(kernel+h~kind_MSE,value.var="mse") %>% flextable()
 
-
-
+ks_df2[,.(mse = fmean((y -  true_y)^2)),by=.(kernel,h,kind)]  %>%
+  ggplot(aes(x=h,y=mse))+geom_line(aes(linetype = kind,color = kernel))+theme_linedraw()
 
 ```
 
