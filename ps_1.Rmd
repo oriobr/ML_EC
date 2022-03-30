@@ -166,9 +166,9 @@ df %>%  ggscatter(x= "medianIncome",y="medianHouseValue",color = alpha(c("#458B7
 ::: {dir="rtl"}
 אנו רואים שכאשר החציון של ערך הבתים גובה אין מתאם עם ההשתכרות החצונית של תושבי הבלוק.
 אולם בערכים נמוכים יותר נראה שישנה מגמה כלילת על מתאם חיובי
+:::
 
 ### b
-:::
 
 ```{r}
 reg_1 <- df %>%   lm(medianHouseValue ~ medianIncome,data = .)
@@ -182,9 +182,9 @@ reg_1 %>% summary
 
 ```
 
-::: {dir="rtl"}
 ### d
 
+::: {dir="rtl"}
 המודל הנאמד מנסח קשר לינארי בין ערכו החציוני של בית בבלוק ובין השכר החציוני של תושבי הבלוק.
 
 במודל זה החותך מייצג את ערכה של דירה באופן בסיסי, ללא קושר למעמד הכלכלי של תושבי הבלוק.
@@ -196,9 +196,9 @@ reg_1 %>% summary
 כן כל המודל.
 
 אחוז השונות המוסברת על ידי מודל זה הינה 47 אחוז
+:::
 
 ### e
-:::
 
 ```{r}
 reg_1 %>% plot()
@@ -232,8 +232,10 @@ df %>%  ggscatter(x= "medianIncome",y="medianHouseValue",add="reg.line",add.para
 
 ### a
 
+::: {dir="rtl"}
 אנו רואים שיש ערכים קוצוניים.
 בניהם ניתן להבחין שבעלויות גבוהות אין מתאם בין השכר ההחציוני לערך הדירה החציוני
+:::
 
 ```{r}
 
@@ -245,9 +247,11 @@ hist(df[,.(medianHouseValue)], breaks=100)
 
 ```
 
+::: {dir="rtl"}
 ניתן לראות שישנה הבדל גדול בהתפלגות.
 בעוד שההכנסה החציונית מתפלגת באופן יחסת אחיד עם זנב בערכים הגובהים.
 לעומת זאת אנו רואים הצטברות גבוהה בערכים הגבוהים
+:::
 
 ### b
 
@@ -259,9 +263,11 @@ reg_2  %>% summary
 
 ### c
 
+::: {dir="rtl"}
 נראה שהמודל המלא שהוצע בעייתי, נראה שהכללת הקורדינטות כמשתנה מסביר באופן הזה אינה הגיונית.
 ברור שלמיקום הוא בעל השפעה על ערך הדירה, אולם נראה שהשפעת המיקום אינה תוצאה של קרבה לקו המשווה או מרחק מהקטבים.
 כך שהכנסתם כגורם הסברי באופן לינארי נראת לכל הפחות תמוהה.
+
 יתר על כן, מכיוון שערכי האומדים של קו האורך וקו הגובה כמעט זהים והקולרציה שלהם קרובה לאיחד ושלילית שני עומדים למעשה יבטלו האחד את השני.
 על פניו נראה שיותר הגיוני להתיחס למיקום כמשתנה דמי של צמדי קורדינטות ולא כמשתנה כמותי
 
@@ -272,30 +278,22 @@ reg_2  %>% summary
 נראה שעדיף להחליף את המשתנים הללו במשתנים המייצגים מדד פר דירה.
 באופן זה נרווח דבר נוסף.נבטל את המתאם החזק הקיים בין המשתנה האוכליסה למשתני החדרים.
 
-
-כפי שניתן לראות להלן:.
+כפי שניתן לראות להלן:
+:::
 
 ```{r}
-(df[,.(totalRooms,totalBedrooms,population)]/df$households) %>% cor()
 
 (df[,.(totalRooms,totalBedrooms,population)]/df$households) %>% cor() %>% corrplot(method = 'number',diag = FALSE, tl.col = "black")
-
-```
-
-
-
-```{r}
-
-reg_3 <- lm(medianHouseValue~ df$medianIncome+df$housingMedianAge+I(totalBedrooms/households)+I(population/households)+households+I(households^2),data =df)
-
-parameters::model_parameters(reg_3)
-
 
 ```
 
 # KNN
 
 ## 1
+
+::: {dir="rtl"}
+החבילה נטענה כבר בתחילת התרגיל
+:::
 
 ## 2
 
@@ -317,7 +315,9 @@ dat %>% fdim
 dat %>% descr()
 ```
 
+::: {dir="rtl"}
 אנו רואים שאין ערכים שאינם קטגורים שנמצאים מסביב לאפס
+:::
 
 ### c
 
@@ -332,7 +332,13 @@ num_names <- dat %>% num_vars() %>% names()
 
  dat[,lapply(.SD, sd),.SDcols = num_names]
 
+ 
 ```
+
+::: {dir="rtl"}
+הערכים אינם מנורמלים.
+שכל סטיית התקן אינה שווה ל1
+:::
 
 ## 4
 
@@ -369,16 +375,19 @@ test_dat <- testing(dat_split)
 ### d
 
 ```{r}
-k_n <- 5
 
-foreach(k_n=c(1,5,20,70)) %do% {
-# c
+
+KNN_LOOP<- foreach(k_n=c(1,5,20,70)) %do% {
+
+  # c
   
-step_1<-   knn(train = train_dat[,2:3],test = test_dat[,2:3],k = k_n,cl =train_dat$default ) 
+step_1 <-   knn(train = train_dat[,2:3],test = test_dat[,2:3],k = k_n,cl =train_dat$default ) 
 
 assign(paste0("rknn_",k_n),step_1)  
+
 # d
 # ליצור טבלת שיכחות 
+
 assign(paste0("tknn_",k_n),table(get(paste0("rknn_",k_n))))  
 
 # e
@@ -390,9 +399,17 @@ assign(paste0("pknn_",k_n),prop.table(get(paste0("tknn_",k_n))))
 
 }
 
-rknn_1
-tknn_1
-pknn_1
+```
+
+::: {dir="rtl"}
+נראה דוגמאות לכך שהתהליך עבד
+:::
+
+```{r}
+
+rknn_20 %>% head()
+tknn_20
+pknn_20
 ```
 
 ## 5
@@ -406,18 +423,9 @@ prop_train
 
 ```
 
-
-```{r}
-p_knn_list <-   ls(pattern = "pknn")
-
-foreach(p=p_knn_list,.combine = `rbind`)%do% {
-  prop_train-get(p)
-}
-```
-
-ליצור מספר רב של K ולבדוק מה ההסתברות שתתקבל
-אנו ננסה למעזר את הטעות ולבחור את הK שיתן את הטעות המינימלית.
-
+::: {dir="rtl"}
+ליצור מספר רב של K ולבדוק מה ההסתברות שתתקבל אנו ננסה למעזר את הטעות ולבחור את הK שיתן את הטעות המינימלית.
+:::
 
 ```{r}
 tab_test <- test_dat$default %>% table()  
@@ -432,21 +440,37 @@ prop_test <- prop.table(tab_test)
 
 ```
 
-### Kernel Regression
-
+# Kernel Regression
+## 1
 ```{r}
+df_1 <- df %>% num_vars() %>% fscale()
 
-df_1<- df %>% num_vars() %>% fscale()
 
 df_split <- rsample::initial_split(df_1,prop = 4/5)
 
-train_df <- training(df_split)
-test_df <- testing(df_split)
+train_df <- training(df_split) %>% .[order(medianIncome)]
+test_df <- testing(df_split) %>% .[order(medianIncome)]
 
+
+train_df[,row:=1:.N]
+test_df[,row:=1:.N]
+
+```
+
+### a
+
+::: {dir="rtl}
+החבילה טעונה כבר באופן אוטומטי
+
+:::
+
+### b + 
+```{r}
 cl <- makePSOCKcluster(4)
 doParallel::registerDoParallel(cl)
 
 kernel_type <-  c("box", "normal") 
+type_df <- c("train_df" , "test_df")
 
 ks_df <-
   foreach(kernel_type = kernel_type ,.combine = 'rbind') %:%
@@ -454,6 +478,8 @@ ks_df <-
 
   
 train_ks <-   ksmooth(train_df$medianHouseValue,train_df$medianIncome,kernel_type,bandwidth = h_n)
+
+train_ks <-   ksmooth(train_df$medianHouseValue,train_df$medianIncome,"normal",bandwidth = 0.2)
 
 mse_train<- fmean((train_ks$y-train_df$medianHouseValue)^2)
   
@@ -468,7 +494,145 @@ data.table("Kernel"=kernel_type,"h"=h_n,"train_MSE"= mse_train,"test_MSE"=mse_te
 
 }
 
+train_ks %>% qDT() %>% names
+AA<- train_ks %>% qDT() 
+  ggplot2::quickplot(x =train_ks$x,y=train_ks$y)
 
-
+  AA %>% ggline(x="x",y="y")
+  
+  
 ks_df %>% flextable()
 ```
+
+
+
+```{r}
+
+ks_df2 <-
+  foreach(kernel_type = kernel_type ,.combine = 'rbind') %:%
+  foreach(h_n = 1:20/10,.combine = 'rbind' )%:%
+  foreach(type_df = type_df,.combine = 'rbind',.packages = c("fastverse" ,"stringr") ,.export = type_df) %dopar% {
+
+  
+df_step1 <-
+
+  ksmooth(x=get(type_df)$medianIncome,y=get(type_df)$medianHouseValue,kernel_type,bandwidth = h_n) %>% qDT()
+
+df_step1[,"kernel" := kernel_type]
+df_step1[,"h" := h_n]
+df_step1[,"kind" := str_sub(type_df,end = -4)]
+df_step1[,row:=1:.N]
+# df_step1[,"true_y" := get(type_df)$medianHouseValue]
+ # df_step1 <- df_step1[get(type_df)[,.(medianHouseValue,row)],on=.(row)]
+ 
+ # df_step1 <- get(type_df)[,.(medianHouseValue,medianIncome)][df_step1,on=.(x=medianIncome)]
+ 
+# df_step1[,medianHouseValue:= NULL]
+df_step1 <- merge.data.table(df_step1,get(type_df)[,.(medianHouseValue,medianIncome)],by.x = "x",by.y ="medianIncome" ,all.y = TRUE)
+# df_step1 <- cbind(df_step1,get(type_df)[,.(medianHouseValue)])
+ df_step1[,true_y:=medianHouseValue]
+#
+ df_step1[,medianHouseValue:= NULL]
+
+
+df_step1
+
+}
+
+
+ks_df2
+
+qplot(data=ks_df2,x=x,y = medianHouseValue)
+
+df_plot_ks<- ks_df2[kind == "train"][,gro := paste("kernel =",kernel,",","h = ",h ),by=.(kernel,h)]
+
+set.seed(1244)
+sam <- sample(1:40,3)
+
+gro_sam<- df_plot_ks1$gro %>% unique() %>% .[sam]
+
+df_plot_ks1[gro %in% gro_sam] %>% ggplot() + geom_point(
+  aes(x = medianIncome, y = medianHouseValue),
+  color = alpha(c("#838B8B"), 0.09),
+  fill = alpha(c("#838B8B"), 0.04),
+  data = train_df,
+  inherit.aes = TRUE
+) +
+  geom_line(aes(x = x, y = y, color = gro), inherit.aes = FALSE) +
+  color_palette(c("#CD2626", "#008B00", "#CD853F")) + theme_classic2()
+
+
+
+
+
+
+
+
+```
+
+
+```{r}
+
+ks_df3 <-
+  foreach(kernel_type = kernel_type ,.combine = 'rbind') %:%
+  foreach(h_n = 1:20/10,.combine = 'rbind' )%:%
+  foreach(type_df = type_df,.combine = 'rbind',.packages = c("fastverse" ,"stringr") ,.export = type_df) %dopar% {
+
+  
+df_step1 <-
+  ksmooth(x=get(type_df)$medianIncome,y=get(type_df)$medianHouseValue,kernel_type,bandwidth = h_n,x.points = get(type_df)$medianIncome) %>% qDT()
+
+df_step1[,"kernel" := kernel_type]
+df_step1[,"h" := h_n]
+df_step1[,"kind" := str_sub(type_df,end = -4)]
+# df_step1[,"true_y" := get(type_df)$medianHouseValue]
+#df_step1 <- df_step1[get(type_df)[,.(medianHouseValue,medianIncome)],on=.(x=medianIncome)]
+# df_step1[,medianHouseValue:= NULL]
+# df_step1 <- merge.data.table(df_step1,get(type_df)[,.(medianHouseValue,medianIncome)],by.x = "x",by.y ="medianIncome" ,all.x = TRUE)
+#df_step1[,true_y:=medianHouseValue]
+#df_step1[,medianHouseValue:= NULL]
+
+df_step1
+
+}
+
+ks_df3[kind=="train"&h==0.7&kernel=="normal"] %>% nrow()
+train_df$medianIncome %>% length()
+
+AAA<- cbind(
+ks_df3[kind=="train"&h==0.7&kernel=="normal"],train_df[,.(medianIncome,medianHouseValue)]
+)
+
+
+AAA<- ks_df2[kind=="train",unique(.SD),by = row,.SDcols= c("x","true_y")]
+
+AAA[order(x)]
+
+qplot(data=AAA,x=x,y =medianHouseValue)  
+
+qplot( data= ks_df2[kind=="train"],x=x,y =true_y)  
+
+merge.data.table(
+ks_df3[kind=="train"&h==0.7&kernel=="normal"]
+,
+train_df[,.(medianIncome,medianHouseValue)],by.x = "x",by.y = "medianIncome")
+
+train_df[,.(medianIncome,medianHouseValue)] %>% nrow()
+all.equal(ks_df3[kind=="train"&h==0.2&kernel=="normal"]$x,train_df$medianIncome)
+data.table(ks_df3[kind=="train"&h==0.2&kernel=="normal"][,.(x,)],train_df$medianIncome) %>% view()
+
+df_plot_ks1<- ks_df3[kind == "train"][,gro := .GRP,by=.(kernel,h)]
+df_plot_ks1<- ks_df3[kind == "train"][,gro := paste("kernel =",kernel,",","h = ",h ),by=.(kernel,h)]
+
+
+set.seed(1244)
+sam <- sample(1:40,3)
+
+gro_sam<- df_plot_ks1$gro %>% unique() %>% .[sam]
+
+df_plot_ks1[gro %in% gro_sam] %>% ggplot()+ geom_point(aes(x = medianIncome,y=medianHouseValue),color = alpha(c("#778899"),0.09),data = train_df,inherit.aes = TRUE)+geom_line(aes(x=x,y=y,color=gro),inherit.aes =FALSE)+ theme_classic2()
+
+
+
+```
+
