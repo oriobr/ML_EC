@@ -4,7 +4,7 @@ author: "ori oberman - 311227995"
 date: "31 3 2022"
 output: html_document
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
   markdown: 
     wrap: sentence
 ---
@@ -330,7 +330,7 @@ dat %>% descr()
 ```{r}
 num_names <- dat %>% num_vars() %>% names()
 
- dat[,lapply(.SD, sd),.SDcols = num_names]
+ dat[,lapply(.SD, sd),.SDcols = num_names] %>% print()
 
  
 ```
@@ -522,7 +522,7 @@ ks_df <-
 
 # להראות תוצרים של התהליך
 
-ks_df %>% head()
+ks_df %>% head() %>% print()
 ```
 
 ::: {dir="rtl"}
@@ -645,7 +645,7 @@ ks_df_2 <-
 
 # להראות תוצרים של התהליך
 
-ks_df_2 %>% head()
+ks_df_2 %>% head() %>% print()
 
 
 
