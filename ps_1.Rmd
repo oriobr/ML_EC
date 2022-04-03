@@ -1,6 +1,6 @@
 ---
 title: "pr_1"
-author: "ori oberman - 311227995"
+author: "ori oberman - 311227995 | אביעד דון 311586986"
 date: "31 3 2022"
 output: html_document
 editor_options: 
