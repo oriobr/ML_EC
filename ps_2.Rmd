@@ -1,0 +1,308 @@
+---
+title: "pr_2"
+author: "ori oberman - 311227995 | אביעד דון 311586986"
+date: "17 4 2022"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+markdown: 
+  wrap: sentence
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r eval=FALSE, include=FALSE}
+# ## Clear desk
+rm(list=ls())
+# 
+# ## Garbage collection
+gc()
+```
+
+```{r  }
+## Set directory
+path <- "C:/Users/osoor/Documents/eco/ML_EC"
+setwd(path)
+getwd()
+
+options(scipen = 999)
+
+```
+
+```{r message=FALSE, include=FALSE}
+#library(haven) ## Reading .dta files
+#library(readstata13) ## Reading .dta files 2
+library(Hmisc) ## Describing data.frames
+library(dplyr) ## Data manipulation 
+#library(lmtest) ## Linear models tests 
+library(stargazer) ## Regression Tables
+#library(plm) ## Fixed effects models
+#library(lfe) ## Fixed effects models 2
+library(fixest) ## Fixed effects models 2
+#library(insight) ## Fixed effects models 3
+library(tidyverse)
+library(fixest)
+library(car) ## Hypo testing
+library(margins) 
+library(scales)
+library(data.table)
+library(forcats)
+#library(fastDummies) #יצרת משתנה דמי
+#library(sjlabelled) #יצרת משתנה דמי
+library(foreach)
+library(useful)
+library(tidyfast)
+library(doParallel)
+library(truncnorm)
+library(tidytable)
+library(collapse)
+library(fastverse)
+library(readstata13)
+library(ISLR)
+library(class)
+
+
+
+
+#office use
+library(officer)
+#library(mschart)
+library(officedown)
+
+
+
+# ggplot pack
+library(wesanderson)
+library(patchwork)
+#library(ggmap)
+library(RColorBrewer)
+#library(ggthemr)
+library(ggpubr)
+#library(treemapify)
+#library(ggiraphExtra)
+#library(sjPlot)
+#library(ggeffects)
+library(modelsummary)
+#library(kableExtra)
+#library(webshot)
+library(flextable)
+library(ggridges)
+library(paletteer)
+library(corrplot)
+
+#font pack
+library(ragg) #use heberow
+#library('systemfonts')
+library(utf8)
+#library('textshaping')
+library(extrafont)
+library(tinytex)
+#library(showtext)
+
+```
+
+```{r}
+# usful fun
+tidt<- function(x){ qDT(tidy(x))} 
+
+# df <- read.table("spam.data")
+ df <- fread("spam.data")
+
+df %>% str
+# df1 %>% str
+
+df[,V58:=as.factor(V58)]
+
+num_vars(df) %<>% fscale() 
+
+df %>% vclasses()
+
+library(rsample)
+df_split <- rsample::initial_split(df,prop = 4/5)
+
+train_df <- training(df_split)
+test_df <- testing(df_split) 
+
+
+
+
+library(tree)
+
+
+tree_1 <- tree(as.formula(paste0("V",ncol(train_df),"~.")),data = train_df) 
+
+tree_1 %>% summary()
+plot(tree_1);text(tree_1, pretty=0)
+
+tree_preds <- predict(object = tree_1,newdata = test_df,type = "class")
+
+
+
+# לבדוק את אחוז ההתאמה
+
+mean( test_df$V58  == tree_preds)
+table( test_df$V58, tree_preds)
+ 
+
+
+ #check accuracy of predictions
+
+###
+
+cv_tree_1<- cv.tree(tree_1)
+
+cv_tree_1 %>% plot(type ="b",)
+
+
+ plot(x= cv_tree_1$k,y = cv_tree_1$dev,type = "b",xlab = "k",ylab = "deviance")
+# 
+# df_cv_1<- cv_tree_1[1:3] %>% list2DF()
+# 
+# df_cv_1 %>% ggplot(aes(y=dev))+geom_line(aes(x=k))+geom_point(aes(x=k))
+
+ 
+pr_tree_1 <-  prune.misclass(tree_1, best = 8)
+
+
+```
+
+```{r}
+pr_tree_1 %>% summary()
+plot(pr_tree_1);text(pr_tree_1, pretty=0)
+
+tree_preds <- predict(object = pr_tree_1,newdata = test_df,type = "class")
+
+
+
+# לבדוק את אחוז ההתאמה
+
+mean( test_df$V58  == tree_preds)
+table( test_df$V58, tree_preds)
+ 
+
+```
+
+6
+
+```{r}
+library(randomForest)
+
+fores_ran_1 <-   randomForest(as.formula(paste0("V",ncol(train_df),"~.")),data = train_df)
+
+fores_ran_1 %>% plot
+pr_fores_ran_1 <- fores_ran_1 %>% predict(newdata = test_df) 
+
+
+pr_fores_ran_1
+
+
+
+mean( test_df$V58  == pr_fores_ran_1)
+table( test_df$V58, pr_fores_ran_1)
+ 
+
+
+```
+
+
+```{r}
+df <- fread("CAhousing.csv")
+
+avr_midian_value <- df$medianHouseValue %>% mean()
+
+df %<>% fscale()
+
+# get_vars(df,"[^medianHouseValue]",regex = TRUE) %<>% fscale()
+
+
+df_split <- rsample::initial_split(df)
+
+train_df <- training(df_split)
+test_df <- testing(df_split) 
+
+
+
+
+
+tree_2 <- tree(medianHouseValue~.,data = train_df) 
+
+tree_2 %>% summary()
+plot(tree_2);text(tree_2, pretty=0)
+
+tree_preds <- predict(object = tree_2,newdata = test_df)
+
+
+
+ RMSE <- function(x, y) {
+   sqrt(mean((x-y)^2))
+ }
+
+RMSE(tree_preds,test_df$medianHouseValue)
+
+
+
+
+ #check accuracy of predictions
+
+###
+
+cv_tree_2<- cv.tree(tree_2)
+
+cv_tree_2 %>% plot(type ="b",)
+
+
+ plot(x= cv_tree_2$k,y = cv_tree_2$dev,type = "b",xlab = "k",ylab = "deviance")
+# 
+# df_cv_1<- cv_tree_1[1:3] %>% list2DF()
+# 
+# df_cv_1 %>% ggplot(aes(y=dev))+geom_line(aes(x=k))+geom_point(aes(x=k))
+
+ 
+pr_tree_1 <-  prune.tree(tree_2, best = 7)
+
+pr_tree_1 %>% summary()
+plot(pr_tree_1);text(pr_tree_1, pretty=0)
+
+tree_preds <- predict(object = pr_tree_1,newdata = test_df)
+
+
+
+# לבדוק את אחוז ההתאמה
+
+RMSE(tree_preds,test_df$medianHouseValue)
+
+ 
+
+```
+
+
+```{r}
+
+
+
+fores_ran_2 <-   randomForest(medianHouseValue~.,data = train_df,importance=TRUE)
+
+fores_ran_2 %>% plot
+
+
+pr_fores_ran_2 <- fores_ran_2 %>% predict(newdata = test_df) 
+
+
+pr_fores_ran_2
+
+
+
+RMSE(pr_fores_ran_2,test_df$medianHouseValue)
+
+
+
+
+importance(fores_ran_2) 
+
+varImpPlot(fores_ran_2) 
+
+```
+
+
