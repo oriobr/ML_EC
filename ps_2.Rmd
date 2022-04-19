@@ -8,7 +8,7 @@ editor_options:
 markdown: 
   wrap: sentence
 ---
-  
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -206,7 +206,6 @@ table( test_df$V58, pr_fores_ran_1)
 
 ```
 
-
 ```{r}
 df <- fread("CAhousing.csv")
 
@@ -277,6 +276,7 @@ RMSE(tree_preds,test_df$medianHouseValue)
 
 ```
 
+hi
 
 ```{r}
 
@@ -303,6 +303,10 @@ importance(fores_ran_2)
 
 varImpPlot(fores_ran_2) 
 
+
+AA <- 3
 ```
 
+hi whet i want
 
+`r print(AA)`
