@@ -22,11 +22,19 @@ gc()
 ```
 
 ```{r  }
-## Set directory
-path <- "C:/Users/User/Desktop/R files/ML files/2"
+# ## Set directory
+# path <- "C:/Users/User/Desktop/R files/ML files/2"
+# setwd(path)
+# getwd()
+# options(scipen = 999)
+
+
+path <- "C:/Users/osoor/Documents/eco/ML_EC"
 setwd(path)
 getwd()
+
 options(scipen = 999)
+
 ```
 
 ```{r message=FALSE, include=FALSE}
@@ -93,67 +101,89 @@ library(tinytex)
 i
 ```
 
-
 # Question 1
-## 1 (LOAD)
+
+## 1 LOAD
+
 ```{r}
 tidt<- function(x){ qDT(tidy(x))} 
  df <- fread("spam.data")
 ```
 
-## 2 (LEARN)
+## 2 LEARN
+
 ### a,b
-##### The data has 4601 Instances, with 50 paramaters
+
+The data has 4601 Instances, with 50 paramaters
 
 ### c
+
 ```{r}
 df %>% str
-# Most of the data contains some kind of percentage, 
-# whereas a small portion of it contains binaries (0/1)
+
 ```
 
+Most of the data contains some kind of percentage, whereas a small portion of it contains binaries (0/1)
 
+## 3 SPLIR DATA
 
-## 3 (SPLIR DATA)
 ```{r}
+
 df[,V58:=as.factor(V58)]
+
 num_vars(df) %<>% fscale() 
+
+# Check the class of each column
 df %>% vclasses()
+
+
 library(rsample)
+
 df_split <- rsample::initial_split(df,prop = 4/5)
+
 train_df <- training(df_split)
+
 test_df <- testing(df_split)
 ```
 
-## 5 (TREES)
-### a (load tree)
+## 5 TREES
+
+### a load library tree
+
 ```{r}
 library(tree)
 ```
 
-### b (fit a tree)
+### b fit a tree
+
 ```{r}
 tree_1 <- tree(as.formula(paste0("V",ncol(train_df),"~.")),data = train_df)
 ```
 
-### c (Summury)
+### c Summury
+
 ```{r}
+
 tree_1 %>% summary()
+
 ```
 
-### d (Plot)
+### d Plot
+
 ```{r}
 plot(tree_1);text(tree_1, pretty=0)
 ```
+
 #### מה אנחנו יכולים לומר על התוצאות?
 
-
 ### e (prediction on the test set)
+
 ```{r}
 tree_preds <- predict(object = tree_1,newdata = test_df,type = "class")
 ```
 
-### f (Evaluate the fit)
+### f Evaluate the fit
+
 ```{r}
 # לבדוק את אחוז ההתאמה
 mean( test_df$V58  == tree_preds)
@@ -162,51 +192,66 @@ table( test_df$V58, tree_preds)
  #check accuracy of predictions
 ```
 
-### g (cross-validation)
+### g - cross-validation
+
 ```{r}
 cv_tree_1<- cv.tree(tree_1)
 ```
 
-### h (examine cv)
+### h - examine cv
+
 ```{r}
 cv_tree_1 %>% plot(type ="b",)
 ```
+
 #### What is size? What is k?
 
-### i (the deviance)
+### i - the deviance
+
 ```{r}
 plot(x= cv_tree_1$k,y = cv_tree_1$dev,type = "b",xlab = "k",ylab = "deviance")
 ```
 
-### k (prune)
+### k - prune
+
 ```{r}
 pr_tree_1 <-  prune.misclass(tree_1, best = 8)
 ```
 
-### l (repeat with pruned tree)
+### l - repeat with pruned tree
+
 ```{r}
 pr_tree_1 %>% summary()
-plot(pr_tree_1);text(pr_tree_1, pretty=0)
-tree_preds <- predict(object = pr_tree_1,newdata = test_df,type = "class")
+plot(pr_tree_1)
+text(pr_tree_1, pretty = 0)
+tree_preds <-
+  predict(object = pr_tree_1,
+          newdata = test_df,
+          type = "class")
 # לבדוק את אחוז ההתאמה
-mean( test_df$V58  == tree_preds)
-table( test_df$V58, tree_preds)
- 
+mean(test_df$V58  == tree_preds)
+table(test_df$V58, tree_preds)
+
 ```
 
-## 6 (RANDOM FOREST)
-### a (load library)
+## 6 - RANDOM FOREST
+
+### a - load library
+
 ```{r}
 library(randomForest)
 ```
 
-### b (fit random model)
+### b - fit random model
+
 ```{r}
-fores_ran_1 <-   randomForest(as.formula(paste0("V",ncol(train_df),"~.")),data = train_df)
+fores_ran_1 <-
+  randomForest(as.formula(paste0("V", ncol(train_df), "~.")), data = train_df)
 fores_ran_1 %>% plot
 ```
 
-### c (predict)
+### c - predict
+
 ```{r}
 pr_fores_ran_1 <- fores_ran_1 %>% predict(newdata = test_df) 
 pr_fores_ran_1
@@ -214,70 +259,95 @@ mean( test_df$V58  == pr_fores_ran_1)
 table( test_df$V58, pr_fores_ran_1)
  
 ```
+
 #### report the results
 
-
 # Regression
-## 7 (TREES)
-### a (read)
+
+## 7 - TREES
+
+### a - read
+
 ```{r}
 df <- fread("CAhousing.csv")
 ```
 
-### b (split)
+### b - split
+
 ```{r}
-avr_midian_value <- df$medianHouseValue %>% mean()
+
 df %<>% fscale()
+
 df_split <- rsample::initial_split(df)
+
 train_df <- training(df_split)
+
 test_df <- testing(df_split) 
+
 tree_2 <- tree(medianHouseValue~.,data = train_df) 
+
 tree_2 %>% summary()
 ```
 
-### d (fitting a regression)
+### d - fitting a regression
+
 ```{r}
 plot(tree_2);text(tree_2, pretty=0)
+
 tree_preds <- predict(object = tree_2,newdata = test_df)
- RMSE <- function(x, y) {
-   sqrt(mean((x-y)^2))
- }
+ 
 ```
 
 ### e (RMSE)
+
 ```{r}
+# set function for RMSE
+RMSE <- function(x, y) {sqrt(mean((x-y)^2))}
+
 RMSE(tree_preds,test_df$medianHouseValue)
  #check accuracy of predictions
-###
+
 cv_tree_2<- cv.tree(tree_2)
+
 cv_tree_2 %>% plot(type ="b",)
- plot(x= cv_tree_2$k,y = cv_tree_2$dev,type = "b",xlab = "k",ylab = "deviance")
+
+plot(x= cv_tree_2$k,y = cv_tree_2$dev,type = "b",xlab = "k",ylab = "deviance")
  
 pr_tree_1 <-  prune.tree(tree_2, best = 7)
+
 pr_tree_1 %>% summary()
+
 plot(pr_tree_1);text(pr_tree_1, pretty=0)
+
 tree_preds <- predict(object = pr_tree_1,newdata = test_df)
+
 # לבדוק את אחוז ההתאמה
 RMSE(tree_preds,test_df$medianHouseValue)
  
 ```
 
+## 8 -RANDOM FOREST
 
-## 8 (RANDOM FOREST)
-### a (random forest model) 
+### a - random forest model
+
 ```{r}
-fores_ran_2 <-   randomForest(medianHouseValue~.,data = train_df,importance=TRUE)
+fores_ran_2 <- randomForest(medianHouseValue~.,data = train_df,importance=TRUE)
+
 fores_ran_2 %>% plot
+
 pr_fores_ran_2 <- fores_ran_2 %>% predict(newdata = test_df) 
+
 pr_fores_ran_2
 ```
 
 ### b (RMSE)
+
 ```{r}
 RMSE(pr_fores_ran_2,test_df$medianHouseValue)
 ```
 
 ### c (importance and varImpPlot)
+
 ```{r}
 importance(fores_ran_2) 
 varImpPlot(fores_ran_2) 
