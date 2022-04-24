@@ -1,0 +1,399 @@
+---
+title: "pr_2"
+author: "ori oberman - 311227995 | אביעד דון 311586986"
+date: "17 4 2022"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+markdown: 
+  wrap: sentence
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r eval=FALSE, include=FALSE}
+# ## Clear desk
+rm(list=ls())
+# 
+# ## Garbage collection
+gc()
+```
+
+```{r  }
+# ## Set directory
+# path <- "C:/Users/User/Desktop/R files/ML files/2"
+# setwd(path)
+# getwd()
+# options(scipen = 999)
+
+
+path <- "C:/Users/osoor/Documents/eco/ML_EC"
+setwd(path)
+getwd()
+
+options(scipen = 999)
+
+```
+
+```{r message=FALSE, include=FALSE}
+#library(haven) ## Reading .dta files
+#library(readstata13) ## Reading .dta files 2
+library(Hmisc) ## Describing data.frames
+library(dplyr) ## Data manipulation 
+#library(lmtest) ## Linear models tests 
+library(stargazer) ## Regression Tables
+#library(plm) ## Fixed effects models
+#library(lfe) ## Fixed effects models 2
+library(fixest) ## Fixed effects models 2
+#library(insight) ## Fixed effects models 3
+library(tidyverse)
+library(fixest)
+library(car) ## Hypo testing
+library(margins) 
+library(scales)
+library(data.table)
+library(forcats)
+#library(fastDummies) #יצרת משתנה דמי
+#library(sjlabelled) #יצרת משתנה דמי
+library(foreach)
+library(useful)
+library(tidyfast)
+library(doParallel)
+library(truncnorm)
+library(tidytable)
+library(collapse)
+library(fastverse)
+library(readstata13)
+library(ISLR)
+library(class)
+#office use
+library(officer)
+#library(mschart)
+library(officedown)
+# ggplot pack
+library(wesanderson)
+library(patchwork)
+#library(ggmap)
+library(RColorBrewer)
+#library(ggthemr)
+library(ggpubr)
+#library(treemapify)
+#library(ggiraphExtra)
+#library(sjPlot)
+#library(ggeffects)
+library(modelsummary)
+#library(kableExtra)
+#library(webshot)
+library(flextable)
+library(ggridges)
+library(paletteer)
+library(corrplot)
+#font pack
+library(ragg) #use heberow
+#library('systemfonts')
+library(utf8)
+#library('textshaping')
+library(extrafont)
+library(tinytex)
+#library(showtext)
+
+```
+
+# Question 1
+
+## 1 LOAD
+
+```{r}
+tidt<- function(x){ qDT(tidy(x))} 
+df <- fread("spam.data")
+```
+
+## 2 LEARN
+
+### a,b
+
+The data has 4601 Instances, with 50 paramaters
+
+### c
+
+```{r}
+df %>% str
+
+```
+
+Most of the data contains some kind of percentage, whereas a small portion of it contains binaries (0/1)
+
+## 3 SPLIR DATA
+
+```{r}
+
+df$V58 %<>% as.factor()
+
+num_vars(df) %<>% fscale() 
+
+
+library(rsample)
+
+df_split <- rsample::initial_split(df,prop = 4/5)
+
+train_df <- training(df_split)
+
+test_df <- testing(df_split)
+```
+
+## 5 TREES
+
+### a load the tree library
+
+```{r}
+library(tree)
+```
+
+### b fit a tree
+
+```{r}
+tree_1 <-
+  tree(as.formula(paste0("V", ncol(train_df), "~.")), data = train_df)
+```
+
+### c Summury
+
+```{r}
+
+tree_1 %>% summary()
+
+```
+
+### d Plot
+
+```{r}
+plot(tree_1);text(tree_1, pretty=0)
+```
+
+::: {dir="rtl"}
+מכיוון שמשתני העמודות אינם מוגדרים באופן נקודתי קשה להגיד משהו ממשי על התוצאות. אולם אנו יכולים לראות את "תהליך קבלת ההחלטות" שהוביל לחיזוי.
+:::
+
+### e prediction on the test set
+
+```{r}
+tree_preds <-
+  predict(object = tree_1,
+          newdata = test_df,
+          type = "class")
+```
+
+### f Evaluate the fit
+
+```{r}
+mean( test_df$V58  == tree_preds)
+table( test_df$V58, tree_preds)
+
+```
+
+### g - cross-validation
+
+```{r}
+cv_tree_1<- cv.tree(tree_1)
+```
+
+### h - examine cv
+
+```{r}
+cv_tree_1
+```
+
+#### What is size?
+
+::: {dir="rtl"}
+מספר העלים שבעץ
+:::
+
+#### What is k?
+
+::: {dir="rtl"}
+פרמטר העלות למורכבות. נקבע ע"י הCV.
+:::
+
+### i 
+
+```{r}
+cv_tree_1 %>% plot(type ="s")
+
+
+
+
+
+```
+
+### k - prune
+
+```{r}
+
+df_cv<- cv_tree_1[1:3] %>% qDT() 
+
+best_size <- df_cv[,size[dev==min(dev)]]
+
+pr_tree_1 <-  prune.misclass(tree_1, best = best_size)
+```
+
+### l - repeat with pruned tree
+#### l.d
+```{r}
+plot(pr_tree_1);text(pr_tree_1, pretty = 0)
+```
+
+#### l.e
+```{r}
+tree_preds <-
+  predict(object = pr_tree_1,
+          newdata = test_df,
+          type = "class")
+```
+
+#### l.f
+
+```{r}
+mean(test_df$V58  == tree_preds)
+table(test_df$V58, tree_preds)
+
+```
+
+## 6 - RANDOM FOREST
+
+### a - load library
+
+```{r}
+library(randomForest)
+```
+
+### b - fit random model
+
+```{r}
+fores_ran_1 <-
+  randomForest(as.formula(paste0("V", ncol(train_df), "~.")), data = train_df)
+
+```
+
+### c - predict
+
+```{r}
+pr_fores_ran_1 <- fores_ran_1 %>% predict(newdata = test_df) 
+pr_fores_ran_1
+
+```
+
+#### report the results:
+
+```{r}
+mean( test_df$V58  == pr_fores_ran_1)
+
+table( test_df$V58, pr_fores_ran_1)
+
+```
+
+
+# Regression
+
+## 7 - TREES
+
+### a - read
+
+```{r}
+df <- fread("CAhousing.csv")
+```
+
+### b - split
+
+```{r}
+df %<>% fscale()
+
+df_split <- rsample::initial_split(df)
+
+train_df <- training(df_split)
+
+test_df <- testing(df_split)
+```
+
+### c
+```{r}
+tree_2 <- tree(medianHouseValue~.,data = train_df) 
+
+tree_2 %>% summary()
+```
+
+### d - fitting a regression
+
+```{r}
+plot(tree_2);text(tree_2, pretty=0)
+
+tree_preds <- predict(object = tree_2,newdata = test_df)
+
+```
+
+### e 
+
+```{r}
+# set function for RMSE
+RMSE <- function(x, y) {sqrt(mean((x-y)^2))}
+
+RMSE(tree_preds,test_df$medianHouseValue)
+
+```
+
+
+```{r}
+cv_tree_2<- cv.tree(tree_2)
+
+cv_tree_2 %>% plot(type ="s")
+
+df_cv_2<- cv_tree_2[1:3] %>% qDT() 
+
+best_size_2 <- df_cv_2[,size[dev==min(dev)]]
+
+pr_tree_2 <-  prune.misclass(tree_1, best = best_size_2)
+
+
+
+
+pr_tree_1 %>% summary()
+
+plot(pr_tree_1);text(pr_tree_1, pretty=0)
+
+tree_preds <- predict(object = pr_tree_1,newdata = test_df)
+
+# לבדוק את אחוז ההתאמה
+RMSE(tree_preds,test_df$medianHouseValue)
+
+```
+
+## 8 -RANDOM FOREST
+
+### a - random forest model
+
+```{r}
+fores_ran_2 <- randomForest(medianHouseValue~.,data = train_df,importance=TRUE)
+
+
+pr_fores_ran_2 <- fores_ran_2 %>% predict(newdata = test_df) 
+
+```
+
+### b RMSE
+
+```{r}
+RMSE(pr_fores_ran_2,test_df$medianHouseValue)
+```
+
+### c importance and varImpPlot
+
+```{r}
+importance(fores_ran_2) 
+
+
+varImpPlot(fores_ran_2) 
+
+
+```
